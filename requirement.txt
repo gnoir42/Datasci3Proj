@@ -3,4 +3,3 @@ joblib
 numpy
 pillow
 scikit-learn
-tensorflow
