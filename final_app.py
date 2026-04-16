@@ -8,18 +8,27 @@ import pickle
 # -----------------------
 @st.cache_resource
 def load_model():
+    import pickle
+
     with open("data.pkl", "rb") as f:
         data = pickle.load(f)
 
-    # If the pkl contains a dictionary, extract the model
+    # Debug: show structure in Streamlit logs
+    print("Loaded object type:", type(data))
+
     if isinstance(data, dict):
+        print("Dictionary keys:", data.keys())
+
         if "model" in data:
             return data["model"]
-        elif "classifier" in data:
+
+        if "classifier" in data:
             return data["classifier"]
-        else:
-            # fallback: return first value
-            return list(data.values())[0]
+
+        if len(data) > 0:
+            return next(iter(data.values()))
+
+        raise ValueError("model.pkl dictionary is empty")
 
     return data
 
