@@ -1,47 +1,25 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import pickle
+import tensorflow as tf
 
 # -----------------------
 # Load model
 # -----------------------
 @st.cache_resource
 def load_model():
-    import pickle
-
-    with open("data.pkl", "rb") as f:
-        data = pickle.load(f)
-
-    # Debug: show structure in Streamlit logs
-    print("Loaded object type:", type(data))
-
-    if isinstance(data, dict):
-        print("Dictionary keys:", data.keys())
-
-        if "model" in data:
-            return data["model"]
-
-        if "classifier" in data:
-            return data["classifier"]
-
-        if len(data) > 0:
-            return next(iter(data.values()))
-
-        raise ValueError("model.pkl dictionary is empty")
-
-    return data
+    model = tf.keras.models.load_model("fsl_abc_tiny.h5")
+    return model
 
 model = load_model()
 
 # -----------------------
-# Preprocess image
+# Preprocess
 # -----------------------
-def preprocess_image(image, target_size=(224, 224)):
+def preprocess_image(image, target_size=(224,224)):
     image = image.resize(target_size)
-    image = np.array(image) / 255.0
+    image = np.array(image)/255.0
 
-    # remove alpha channel if present
     if image.shape[-1] == 4:
         image = image[..., :3]
 
@@ -53,22 +31,18 @@ def preprocess_image(image, target_size=(224, 224)):
 # -----------------------
 st.title("FSL Image Classifier")
 
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload Image", type=["jpg","jpeg","png"])
 
-if uploaded_file is not None:
+if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image)
 
     if st.button("Predict"):
-        try:
-            processed = preprocess_image(image)
+        processed = preprocess_image(image)
+        prediction = model.predict(processed)
 
-            prediction = model.predict(processed)
-            pred_class = int(np.argmax(prediction))
-            confidence = float(np.max(prediction))
+        pred_class = np.argmax(prediction)
+        confidence = np.max(prediction)
 
-            st.success(f"Prediction: {pred_class}")
-            st.info(f"Confidence: {confidence:.4f}")
-
-        except Exception as e:
-            st.error(f"Error: {e}")
+        st.success(f"Prediction: {pred_class}")
+        st.info(f"Confidence: {confidence:.4f}")
