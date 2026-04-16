@@ -1,27 +1,23 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import tflite_runtime.interpreter as tflite
+import tensorflow as tf
 
 @st.cache_resource
 def load_model():
-    interpreter = tflite.Interpreter(model_path="model.tflite")
-    interpreter.allocate_tensors()
-    return interpreter
+    model = tf.keras.models.load_model("fsl_abc_tiny.h5")
+    return model
 
-interpreter = load_model()
+model = load_model()
 
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-
-def preprocess_image(image, target_size=(224,224)):
+def preprocess_image(image, target_size=(64,64)):
     image = image.resize(target_size)
     image = np.array(image)/255.0
 
     if image.shape[-1] == 4:
         image = image[..., :3]
 
-    image = np.expand_dims(image, axis=0).astype(np.float32)
+    image = np.expand_dims(image, axis=0)
     return image
 
 st.title("FSL Image Classifier")
@@ -35,10 +31,7 @@ if uploaded_file:
     if st.button("Predict"):
         processed = preprocess_image(image)
 
-        interpreter.set_tensor(input_details[0]['index'], processed)
-        interpreter.invoke()
-
-        prediction = interpreter.get_tensor(output_details[0]['index'])
+        prediction = model.predict(processed)
 
         pred_class = int(np.argmax(prediction))
         confidence = float(np.max(prediction))
