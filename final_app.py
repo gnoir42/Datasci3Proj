@@ -1,14 +1,15 @@
 import streamlit as st
-import joblib
 import numpy as np
 from PIL import Image
+import pickle
 
 # -----------------------
 # Load model
 # -----------------------
 @st.cache_resource
 def load_model():
-    model = joblib.load("model.pkl")  # 👈 use joblib
+    with open("model.pkl", "rb") as f:
+        model = pickle.load(f)
     return model
 
 model = load_model()
@@ -20,6 +21,7 @@ def preprocess_image(image, target_size=(224, 224)):
     image = image.resize(target_size)
     image = np.array(image) / 255.0
 
+    # remove alpha channel if PNG
     if image.shape[-1] == 4:
         image = image[..., :3]
 
