@@ -1,5 +1,6 @@
-python=3.10
 streamlit
+tensorflow==2.15.0
 numpy
 pillow
 scikit-learn
+h5py
